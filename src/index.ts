@@ -10,6 +10,11 @@
  *
  * Learn more at https://developers.cloudflare.com/workers/
  */
+const CORS_HEADERS = {
+	"Access-Control-Allow-Origin": "*", // 或者你的 Pages 域名
+	"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type",
+};
 
 interface insetReq {
 	url: string
@@ -18,23 +23,25 @@ interface insetReq {
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
 		const url = new URL(request.url)
-		if (request.method === "POST") {
-			let json = await request.json();
-			const counter = Number(await env.shortChains.get("counter") || -1)
-			const notation = (counter+1).toString(36)
-			await env.shortChains.put("counter",counter+1)
-			await env.shortChains.put("/"+notation,(json as insetReq).url)
-			return new Response(notation);
-		} else if (request.method === "GET") {
-			let url = await env.shortChains.get((new URL(request.url)).pathname)
-			if (url) {
-				return Response.redirect(url, 302);
-			} else {
-				return new Response('NOT FOUND', { status: 404 });
-			}
-		} else {
-			return new Response('BAD REQUEST', { status: 400 });
-		}
+		switch (request.method) {
+			case "OPTIONS":
+				return new Response(null, { headers: CORS_HEADERS });
 
+			case "POST":
+				const json = await request.json();
+				const counter = Number(await env.shortChains.get("counter") || -1)
+				const notation = (counter + 1).toString(36)
+				await env.shortChains.put("counter", counter + 1)
+				await env.shortChains.put("/" + notation, (json as insetReq).url)
+				return new Response(notation, { headers: CORS_HEADERS });
+
+			case "GET":
+				let url = await env.shortChains.get((new URL(request.url)).pathname)
+				if (url) return Response.redirect(url, 302);
+				else return new Response('NOT FOUND', { status: 404, headers: CORS_HEADERS });
+
+			default:
+				return new Response(null);
+		}
 	},
 } satisfies ExportedHandler<Env>;
