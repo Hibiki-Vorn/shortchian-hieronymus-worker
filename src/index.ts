@@ -27,19 +27,23 @@ export default {
 			case "OPTIONS":
 				return new Response(null, { headers: CORS_HEADERS });
 
-			case "POST":
+			case "POST": {
 				const json = await request.json();
+				const url = (json as insetReq).url
+				if (!url) {
+					return new Response(null, { status: 418, headers: CORS_HEADERS });
+				}
 				const counter = Number(await env.shortChains.get("counter") || -1)
 				const notation = (counter + 1).toString(36)
 				await env.shortChains.put("counter", counter + 1)
-				await env.shortChains.put("/" + notation, (json as insetReq).url)
+				await env.shortChains.put("/" + notation, url)
 				return new Response(notation, { headers: CORS_HEADERS });
-
-			case "GET":
+			}
+			case "GET": {
 				let url = await env.shortChains.get((new URL(request.url)).pathname)
 				if (url) return Response.redirect(url, 302);
 				else return new Response('NOT FOUND', { status: 404, headers: CORS_HEADERS });
-
+			}
 			default:
 				return new Response(null);
 		}
