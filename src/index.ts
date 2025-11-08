@@ -28,8 +28,7 @@ export default {
 				return new Response(null, { headers: CORS_HEADERS });
 
 			case "POST": {
-				const json = await request.json();
-				const url = (json as insetReq).url
+				const url = ((await request.json()) as insetReq).url
 				if (!url) {
 					return new Response(null, { status: 418, headers: CORS_HEADERS });
 				}
