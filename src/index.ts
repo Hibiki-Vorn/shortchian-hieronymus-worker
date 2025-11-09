@@ -35,7 +35,7 @@ export default {
 				const counter = Number(await env.shortChains.get("counter") || -1)
 				const notation = (counter + 1).toString(36)
 				await env.shortChains.put("counter", counter + 1)
-				await env.shortChains.put("/" + notation, url)
+				await env.shortChains.put("/" + notation, url, {expirationTtl: 15552000})
 				return new Response(notation, { headers: CORS_HEADERS });
 			}
 			case "GET": {
